@@ -1,0 +1,109 @@
+name: Define tag de versão
+
+on:
+  workflow_call:
+    secrets:
+      VR_PACKAGE_TOKEN:
+        required: true
+    inputs:
+      LAST_VERSION:
+        required: true
+        type: string
+      COMMIT_MESSAGES:
+        required: true
+        type: string
+    outputs:
+      NEW_VERSION:
+        description: "Armazena tag de nova RELEASE"
+        value: ${{ jobs.generate-version.outputs.NEW_VERSION }}
+      HAS_NEW_RELEASE:
+        description: "Valida se os commits devem gerar novas RELEASE"
+        value: ${{ jobs.generate-version.outputs.HAS_NEW_RELEASE }}
+
+
+jobs:
+  generate-version:
+    name: Criar nova tag de versão
+    runs-on: ubuntu-latest
+    outputs:
+      NEW_VERSION: ${{ steps.generate_next_version.outputs.NEW_VERSION }}
+      HAS_NEW_RELEASE: ${{ steps.validate_next_version.outputs.HAS_NEW_RELEASE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.VR_PACKAGE_TOKEN }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Generate next version 
+        id: generate_next_version
+        if: inputs.LAST_VERSION
+        run: |
+          # captura os inputs
+          COMMIT_MESSAGES="${{ inputs.COMMIT_MESSAGES }}"
+          lAST_VERSION=${{ inputs.LAST_VERSION }}
+
+          # Separa a tag recebida pelo input em partes MAJOR, MINOR e PATCH
+          LAST_MAJOR_VERSION=$(echo "$lAST_VERSION" | cut -d. -f1)
+          LAST_MINOR_VERSION=$(echo "$lAST_VERSION" | cut -d. -f2)
+          LAST_PATCH_VERSION=$(echo "$lAST_VERSION" | cut -d. -f3)
+
+          # Ativa a correspondência insensível a maiúsculas e minúsculas
+          shopt -s nocasematch
+
+          # Verficia os commits recebidos se para definir o tipo da release.
+          # Os commits deve estar no padrão de conventional commits contendo type: ou type(escope):
+          if echo "$COMMIT_MESSAGES" | grep -Eq "(feat|fix)(\([^)]*\))?!:"; then
+            # Se encontar o type "feat!:", "feat(escopo)!:", "fix!:", "fix(escopo)!:"
+            # Gera nova tag MAJOR
+            NEW_VERSION="$((LAST_MAJOR_VERSION + 1)).0.0"
+          elif echo "$COMMIT_MESSAGES" | grep -Eq "feat(\([^)]*\))?:"; then
+            # Se encontar o type "feat:" ou "feat(escopo):"
+            # Gera nova tag MINOR
+            NEW_VERSION="$LAST_MAJOR_VERSION.$((LAST_MINOR_VERSION + 1)).0"
+          elif echo "$COMMIT_MESSAGES" | grep -Eq "fix(\([^)]*\))?:"; then
+            # Se encontar o type "fix:" ou "fix(escopo):"
+            # Gera nova tag patch
+            NEW_VERSION="$LAST_MAJOR_VERSION.$LAST_MINOR_VERSION.$((LAST_PATCH_VERSION + 1))"
+          else
+            # Nenhum commit gerará uma nova release
+            echo "Nenhum commit nesta push gerará uma nova release."
+          fi 
+
+          #  exporta a variavel NEW_VERSION como output
+          echo "::set-output name=NEW_VERSION::$NEW_VERSION"
+        shell: bash
+
+      - name: Validate Next Version TAG 
+        id: validate_next_version
+        if: steps.generate_next_version.outputs.NEW_VERSION
+        run: |
+          # captura os inputs
+          lAST_VERSION=${{ inputs.LAST_VERSION }}
+          LAST_MAJOR_VERSION=$(echo "$LAST_VERSION" | cut -d. -f1)
+          LAST_MINOR_VERSION=$(echo "$LAST_VERSION" | cut -d. -f2)
+          LAST_PATCH_VERSION=$(echo "$LAST_VERSION" | cut -d. -f3)
+          
+          NEW_VERSION=${{ steps.generate_next_version.outputs.NEW_VERSION }}
+          NEW_MAJOR_VERSION=$(echo "$NEW_VERSION" | cut -d. -f1)
+          NEW_MINOR_VERSION=$(echo "$NEW_VERSION" | cut -d. -f2)
+          NEW_PATCH_VERSION=$(echo "$NEW_VERSION" | cut -d. -f3)
+
+
+          # Valida se a nova tag de release é valida
+          # Nova Tag deve ser maior que a anterior
+          if [[
+            ($NEW_MAJOR_VERSION -lt $LAST_MAJOR_VERSION) ||
+            ($NEW_MAJOR_VERSION -eq $LAST_MAJOR_VERSION && $NEW_MINOR_VERSION -lt $LAST_MINOR_VERSION) ||
+            ($NEW_MAJOR_VERSION -eq $LAST_MAJOR_VERSION && $NEW_MINOR_VERSION -eq $LAST_MINOR_VERSION && $NEW_PATCH_VERSION -le $LAST_PATCH_VERSION)
+          ]]; then
+            # Caso o teste falhe deve parar o fluxo
+            echo "A nova versão não é superior à última versão. Saindo do fluxo de trabalho."
+            exit 1
+          fi
+
+          #  exporta a variavel HAS_NEW_RELEASE como output
+          echo "::set-output name=HAS_NEW_RELEASE::true"
+        shell: bash
