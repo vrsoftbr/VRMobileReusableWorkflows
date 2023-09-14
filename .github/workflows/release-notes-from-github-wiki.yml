@@ -1,0 +1,152 @@
+name: Atualiza as notas de versão no github wiki.
+
+on:
+  workflow_call:
+    secrets:
+      VR_PACKAGE_TOKEN:
+        required: true
+    inputs:
+      GITHUB_REPOSITORY:
+        required: true
+        type: string
+      NEW_VERSION:
+        required: true
+        type: string
+      BUG_FIX_INFO:
+        required: true
+        type: string
+      FEAT_INFO:
+        required: true
+        type: string
+      BREAK_CHANGE_INFO:
+        required: true
+        type: string
+      TEC_NOTE_INFO:
+        required: true
+        type: string
+      JIRA_ISSUE_KEYS:
+        required: true
+        type: string
+
+
+jobs:
+  update-wiki:
+    name: Gerar nota de versão
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Git Config
+        run: git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com" && git config --global user.name "${GITHUB_ACTOR}"
+
+      - name: Generate release notes markdown
+        id: generate_release_notes
+        run: |
+          # recupera nome do repositorio separando do nome da empresa
+          GITHUB_REPOSITORY_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f2-)
+          echo "::set-output name=GITHUB_REPOSITORY_NAME::$GITHUB_REPOSITORY_NAME"
+
+          # recupera os inputs
+          NEW_VERSION=${{ inputs.NEW_VERSION }}
+          GITHUB_REPOSITORY=${{ inputs.GITHUB_REPOSITORY }}
+
+          BUG_FIX_INFO="${{ inputs.BUG_FIX_INFO }}"
+          FEAT_INFO="${{ inputs.FEAT_INFO }}"
+          BREAK_CHANGE_INFO="${{ inputs.BREAK_CHANGE_INFO }}"
+          TEC_NOTE_INFO="${{ inputs.TEC_NOTE_INFO }}"
+
+          JIRA_ISSUE_KEYS="${{ inputs.JIRA_ISSUE_KEYS }}"
+
+          #  inicia a construção da nota de versão
+          releaseNoteFile="release_note.md"
+          DATA=$(date +'%d/%m/%Y')
+
+          if [ -n "$BREAK_CHANGE_INFO" ]; then
+            echo "# :warning: v$NEW_VERSION - $DATA" > "$releaseNoteFile"
+          else
+            echo "# v$NEW_VERSION - $DATA" > "$releaseNoteFile"
+          fi
+
+          if [ -n "$JIRA_ISSUE_KEYS" ]; then
+            for JIRA_ISSUE_KEY in $JIRA_ISSUE_KEYS; do
+              echo "[![Static Badge](https://img.shields.io/badge/$JIRA_ISSUE_KEY-37474F?style=flat&logo=jira&labelColor=%23263238)](https://vrsoft.atlassian.net/browse/$JIRA_ISSUE_KEY)" >> "$releaseNoteFile"
+            done
+            echo "" >> "$releaseNoteFile"
+          fi
+
+          if [ -n "$BREAK_CHANGE_INFO" ]; then
+            echo "_Esta versão contém mudanças significativas de versão, \`Break Changes\`, que podem causar incompatibilidade com versões anteriores ou afetar o funcionamento de sistemas existentes. É importante revisar essas alterações antes de atualizar para a nova versão._" >> "$releaseNoteFile"
+            echo "" >> "$releaseNoteFile"
+            echo "### :warning: \`Break Changes\`:" >> "$releaseNoteFile"
+
+            BREAK_CHANGE_INFO=$(echo "$BREAK_CHANGE_INFO" | sed 's/|/\n/g')
+            echo "$BREAK_CHANGE_INFO"  >> "$releaseNoteFile"
+          fi
+
+          if [ -n "$BUG_FIX_INFO" ]; then
+            echo "### Correções:" >> "$releaseNoteFile"
+
+            BUG_FIX_INFO=$(echo "$BUG_FIX_INFO" | sed 's/|/\n/g')
+            echo "$BUG_FIX_INFO"  >> "$releaseNoteFile"
+          fi
+
+          if [ -n "$BUG_FIX_INFO" ]; then
+            echo "### Novos Recursos:" >> "$releaseNoteFile"
+
+            FEAT_INFO=$(echo "$FEAT_INFO" | sed 's/|/\n/g')
+            echo "$FEAT_INFO"  >> "$releaseNoteFile"
+          fi
+
+          if [ -n "$TEC_NOTE_INFO" ]; then
+            echo "### Notas Técnica:" >> "$releaseNoteFile"
+
+            TEC_NOTE_INFO=$(echo "$TEC_NOTE_INFO" | sed 's/|/\n/g')
+            echo "$TEC_NOTE_INFO"  >> "$releaseNoteFile"
+          fi
+
+          echo "" >> "$releaseNoteFile"
+          echo "<details>"  >> "$releaseNoteFile"
+          echo "<summary><a href="https://wiki.vrsoft.com.br/wiki/index.php/Pagina_principal"> Code Wiki VR </a></summary>"  >> "$releaseNoteFile"
+          echo "" >> "$releaseNoteFile"
+          echo "\`\`\`"  >> "$releaseNoteFile"
+          echo "===<b>$GITHUB_REPOSITORY_NAME $NEW_VERSION</b>==="  >> "$releaseNoteFile"
+
+          if [ -n "$BUG_FIX_INFO" ]; then
+            echo " <font size=4><b>Correções:</b></font>" >> "$releaseNoteFile"
+            echo "$BUG_FIX_INFO" >> "$releaseNoteFile"
+          fi
+
+          if [ -n "$FEAT_INFO" ]; then
+            echo " <font size=4><b>Novos Recursos:</b></font>" >> "$releaseNoteFile"
+            echo "$FEAT_INFO" >> "$releaseNoteFile"
+          fi
+
+          echo "\`\`\`"  >> "$releaseNoteFile"
+          echo "" >> "$releaseNoteFile"
+          echo "</details>"  >> "$releaseNoteFile"
+          echo "" >> "$releaseNoteFile"
+
+          echo "---" >> "$releaseNoteFile"
+
+      - name: Clone wiki repository  
+        id: clone_wiki_repo
+        run: |
+          # clona o repositorio de wiki do projeto recebido pelo input
+          git clone https://${{ secrets.VR_PACKAGE_TOKEN }}@github.com/${{ inputs.GITHUB_REPOSITORY }}.wiki.git
+
+      - name: Update release note from wiki
+        run: |
+          GITHUB_REPOSITORY_NAME="${{ steps.generate_release_notes.outputs.GITHUB_REPOSITORY_NAME }}.wiki"
+          if [ -f "$GITHUB_REPOSITORY_NAME/Notas-de-versão.md" ]; then
+            cat release_note.md "$GITHUB_REPOSITORY_NAME/Notas-de-versão.md" > temp.md
+            mv temp.md "$GITHUB_REPOSITORY_NAME/Notas-de-versão.md"
+          else
+            cp release_note.md "$GITHUB_REPOSITORY_NAME/Notas-de-versão.md"
+          fi
+
+      - name: Commit release note
+        run: |
+          GITHUB_REPOSITORY_NAME="${{ steps.generate_release_notes.outputs.GITHUB_REPOSITORY_NAME }}.wiki"
+          cd $GITHUB_REPOSITORY_NAME
+          git add .
+          git commit -m "doc: Adiciona nota de versa v${{ inputs.NEW_VERSION }}"
+          git push
