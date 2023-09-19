@@ -18,7 +18,7 @@ on:
       FEAT_INFO:
         required: true
         type: string
-      BREAK_CHANGE_INFO:
+      BREAKING_CHANGE_INFO:
         required: true
         type: string
       TEC_NOTE_INFO:
@@ -51,7 +51,7 @@ jobs:
 
           BUG_FIX_INFO="${{ inputs.BUG_FIX_INFO }}"
           FEAT_INFO="${{ inputs.FEAT_INFO }}"
-          BREAK_CHANGE_INFO="${{ inputs.BREAK_CHANGE_INFO }}"
+          BREAKING_CHANGE_INFO="${{ inputs.BREAKING_CHANGE_INFO }}"
           TEC_NOTE_INFO="${{ inputs.TEC_NOTE_INFO }}"
 
           JIRA_ISSUE_KEYS="${{ inputs.JIRA_ISSUE_KEYS }}"
@@ -60,7 +60,7 @@ jobs:
           releaseNoteFile="release_note.md"
           DATA=$(date +'%d/%m/%Y')
 
-          if [ -n "$BREAK_CHANGE_INFO" ]; then
+          if [ -n "$BREAKING_CHANGE_INFO" ]; then
             echo "# :warning: v$NEW_VERSION - $DATA" > "$releaseNoteFile"
           else
             echo "# v$NEW_VERSION - $DATA" > "$releaseNoteFile"
@@ -73,13 +73,13 @@ jobs:
             echo "" >> "$releaseNoteFile"
           fi
 
-          if [ -n "$BREAK_CHANGE_INFO" ]; then
+          if [ -n "$BREAKING_CHANGE_INFO" ]; then
             echo "_Esta versão contém mudanças significativas de versão, \`Break Changes\`, que podem causar incompatibilidade com versões anteriores ou afetar o funcionamento de sistemas existentes. É importante revisar essas alterações antes de atualizar para a nova versão._" >> "$releaseNoteFile"
             echo "" >> "$releaseNoteFile"
             echo "### :warning: \`Break Changes\`:" >> "$releaseNoteFile"
 
-            BREAK_CHANGE_INFO=$(echo "$BREAK_CHANGE_INFO" | sed 's/|/\n/g')
-            echo "$BREAK_CHANGE_INFO"  >> "$releaseNoteFile"
+            BREAKING_CHANGE_INFO=$(echo "$BREAKING_CHANGE_INFO" | sed 's/|/\n/g')
+            echo "$BREAKING_CHANGE_INFO"  >> "$releaseNoteFile"
           fi
 
           if [ -n "$BUG_FIX_INFO" ]; then

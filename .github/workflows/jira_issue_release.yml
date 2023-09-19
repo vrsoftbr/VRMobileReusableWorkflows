@@ -34,9 +34,9 @@ on:
       FEAT_INFO:
         description: "Armazena os dados de novos recursos documentado no jira."
         value: ${{ jobs.get_and_update_issue.outputs.FEAT_INFO }}
-      BREAK_CHANGE_INFO:
+      BREAKING_CHANGE_INFO:
         description: "Armazena os dados de break change documentado no jira."
-        value: ${{ jobs.get_and_update_issue.outputs.BREAK_CHANGE_INFO }}
+        value: ${{ jobs.get_and_update_issue.outputs.BREAKING_CHANGE_INFO }}
       TEC_NOTE_INFO:
         description: "Armazena os dados de notas técnicas documentado no jira."
         value: ${{ jobs.get_and_update_issue.outputs.TEC_NOTE_INFO }}
@@ -49,7 +49,7 @@ jobs:
       ISSUE_KEYS: ${{ steps.find_issue_key.outputs.ISSUE_KEYS }}
       BUG_FIX_INFO: ${{ steps.update_issues.outputs.BUG_FIX_INFO }}
       FEAT_INFO: ${{ steps.update_issues.outputs.FEAT_INFO }}
-      BREAK_CHANGE_INFO: ${{ steps.update_issues.outputs.BREAK_CHANGE_INFO }}
+      BREAKING_CHANGE_INFO: ${{ steps.update_issues.outputs.BREAKING_CHANGE_INFO }}
       TEC_NOTE_INFO:  ${{ steps.update_issues.outputs.TEC_NOTE_INFO }}
 
     steps:
@@ -92,7 +92,7 @@ jobs:
         # captura as issues exportadas pela step anterior
         ISSUE_KEYS="${{ steps.find_issue_key.outputs.ISSUE_KEYS }}"
 
-        BREAK_CHANGE_INFO=""
+        BREAKING_CHANGE_INFO=""
         BUG_FIX_INFO=""
         FEAT_INFO=""
 
@@ -105,8 +105,8 @@ jobs:
             -X GET "$JIRA_BASE_URL/rest/api/2/issue/$ISSUE_KEY?fields=$JIRA_FIELDS")
 
           # Desestrutura o objeto de resposta
-          ISSUE_BREAK_CHANGE_INFO=$(echo $ISSUE_JSON | jq -r '.fields.customfield_10115')
-          ISSUE_BREAK_CHANGE_INFO=$(echo "$ISSUE_BREAK_CHANGE_INFO" | sed 's/^null$/''/')
+          ISSUE_BREAKING_CHANGE_INFO=$(echo $ISSUE_JSON | jq -r '.fields.customfield_10115')
+          ISSUE_BREAKING_CHANGE_INFO=$(echo "$ISSUE_BREAKING_CHANGE_INFO" | sed 's/^null$/''/')
 
           ISSUE_BUG_FIX_INFO=$(echo $ISSUE_JSON | jq -r '.fields.customfield_10113')
           ISSUE_BUG_FIX_INFO=$(echo "$ISSUE_BUG_FIX_INFO" | sed 's/^null$/''/')
@@ -118,10 +118,10 @@ jobs:
           ISSUE_TEC_NOTE_INFO=$(echo "$ISSUE_TEC_NOTE_INFO" | sed 's/^null$/''/')
 
           # Verifique se a saída do jq não está vazia
-          if [ -n "$ISSUE_BREAK_CHANGE_INFO" ]; then
+          if [ -n "$ISSUE_BREAKING_CHANGE_INFO" ]; then
             # Formata quebras de linha
-            ISSUE_BREAK_CHANGE_INFO=$(echo "$ISSUE_BREAK_CHANGE_INFO" | tr '\n' '|')
-            BREAK_CHANGE_INFO="${BREAK_CHANGE_INFO} $ISSUE_BREAK_CHANGE_INFO"
+            ISSUE_BREAKING_CHANGE_INFO=$(echo "$ISSUE_BREAKING_CHANGE_INFO" | tr '\n' '|')
+            BREAKING_CHANGE_INFO="${BREAKING_CHANGE_INFO} $ISSUE_BREAKING_CHANGE_INFO"
           fi
 
           if [ -n "$ISSUE_BUG_FIX_INFO" ]; then
@@ -154,7 +154,7 @@ jobs:
         done
 
         #  export as variaveis com as informacoes docker speradas pelo tipos
-        echo "::set-output name=BREAK_CHANGE_INFO::$BREAK_CHANGE_INFO"
+        echo "::set-output name=BREAKING_CHANGE_INFO::$BREAKING_CHANGE_INFO"
         echo "::set-output name=BUG_FIX_INFO::$BUG_FIX_INFO"
         echo "::set-output name=FEAT_INFO::$FEAT_INFO"
         echo "::set-output name=TEC_NOTE_INFO::$TEC_NOTE_INFO"
