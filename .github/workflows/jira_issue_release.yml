@@ -7,7 +7,6 @@ on:
         required: true
       JIRA_API_TOKEN:
         required: true
-    variables:
       JIRA_BASE_URL:
         required: true
       JIRA_USER_EMAIL:
