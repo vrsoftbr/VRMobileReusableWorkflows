@@ -40,10 +40,11 @@ jobs:
 
           git checkout $BRANCH
           
-          if git merge --ff-only origin/main; then
+          if git merge --ff-only origin/main || true;  then
             # O merge foi bem-sucedido, então podemos fazer o push
             git push origin $BRANCH
           else
             # O merge falhou devido a conflitos
             echo "O merge falhou devido a conflitos. Não foi feito o push."
+            echo "Resolva os conflitos localmente e tente novamente!"
           fi
