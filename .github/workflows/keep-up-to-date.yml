@@ -38,5 +38,12 @@ jobs:
         run: |
           BRANCH=${{ inputs.BRANCH }}
 
-          git reset --hard origin/main
-          git push origin $BRANCH
+          git checkout $
+          
+          if git merge --ff-only origin/main; then
+            # O merge foi bem-sucedido, então podemos fazer o push
+            git push origin $BRANCH
+          else
+            # O merge falhou devido a conflitos
+            echo "O merge falhou devido a conflitos. Não foi feito o push."
+          fi
