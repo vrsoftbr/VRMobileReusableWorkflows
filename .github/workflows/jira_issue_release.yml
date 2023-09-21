@@ -73,6 +73,7 @@ jobs:
         else
           echo "Nenhuma tarefa foi referencia nos ultimos commits."
         fi
+      shell: bash
 
     - name: Update Issues from JIRA
       id: update_issues
