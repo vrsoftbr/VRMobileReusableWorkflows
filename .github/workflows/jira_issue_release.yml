@@ -63,8 +63,12 @@ jobs:
         # Encontra nas mensagens de commits as tarefas referenciadas.
         ALL_ISSUE_KEYS=$(echo "$COMMIT_MESSAGES" | grep -o '${{ inputs.JIRA_ISSUE_PREFIX }}-[0-9]\+')
         
-        # Remove resultados de id das tarefas diplicadas
-        DISTINCT_ISSUE_KEYS=$(echo "$ALL_ISSUE_KEYS" | sort | uniq)
+
+        DISTINCT_ISSUE_KEYS=""
+        if [ -n "$ALL_ISSUE_KEYS" ]; then
+          # Remove resultados de id das tarefas diplicadas
+          DISTINCT_ISSUE_KEYS=$(echo "$ALL_ISSUE_KEYS" | sort | uniq)
+        fi
         echo $DISTINCT_ISSUE_KEYS
 
         #  exporta a variavel ISSUE_KEYS, id das tarefas encontradas, como output 
