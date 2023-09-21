@@ -46,7 +46,7 @@ jobs:
             echo "::set-output name=IS_FIRST_VERSION::"true""
           fi
 
-      - name: Get Last Release Tag 
+      - name: Get Last Release Tag
         id: get_last_version
         run: |
           # captura o output IS_FIRST_VERSION da step anterior
@@ -54,10 +54,12 @@ jobs:
 
           # verifica se IS_FIRST_VERSION é vazio
           if [ -z "$IS_FIRST_VERSION" ]; then
+            echo "Usar a ultima tag gerada"
             # Se IS_FIRST_VERSION for vazio (false), inicializa uma variável de versão com a última tag gerada
             LAST_VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
             echo "::set-output name=LAST_VERSION::$LAST_VERSION"
           else 
+            echo "Primeira release considerar v0.0.0"
             # Se IS_FIRST_VERSION for (true), inicializa a variável de versão como 0.0.0
             LAST_VERSION="0.0.0"
             echo "::set-output name=LAST_VERSION::$LAST_VERSION"
@@ -76,9 +78,11 @@ jobs:
             COMMIT_COUNT=$(git rev-list main --count)
           else
             # Se IS_FIRST_VERSION for vazia (false), considerar os commits da feitos depois da ultima TAG
-            echo "RELEASE: capturando commits da ultim tag gerada"
-            COMMIT_COUNT=$(git rev-list $(git describe --tags --abbrev=0 @^)..@ --count)
+            echo "RELEASE: capturando commits gerados depois da ultima tag gerada"
+            COMMIT_COUNT=$(git rev-list $(git describe --tags --abbrev=0)..HEAD --count)
           fi
+
+          echo "Total de commits: $COMMIT_COUNT" 
 
           # verifica se existem commits pendente
           if [ "$COMMIT_COUNT" -gt 0 ]; then
@@ -92,7 +96,7 @@ jobs:
         run: |
           # captura o output IS_FIRST_VERSION da step check_already_exists_tags
           IS_FIRST_VERSION=${{ steps.check_already_exists_tags.outputs.IS_FIRST_VERSION }}
-          
+
           # Obtenha a quantidade de novos commits
           if [ -n "$IS_FIRST_VERSION" ]; then
             # Se IS_FIRST_VERSION retornar vazio considera os commits da branch main
