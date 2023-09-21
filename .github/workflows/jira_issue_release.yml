@@ -61,21 +61,21 @@ jobs:
         COMMIT_MESSAGES="${{ inputs.COMMIT_MESSAGES }}"
 
         # Encontra nas mensagens de commits as tarefas referenciadas.
-        ALL_ISSUE_KEYS=$(echo "$COMMIT_MESSAGES" | grep -o '${{ inputs.JIRA_ISSUE_PREFIX }}-[0-9]\+')
-        
+        ALL_ISSUE_KEYS=$(echo "$COMMIT_MESSAGES" | grep -o '${{ inputs.JIRA_ISSUE_PREFIX }}-[0-9]\+' || true)
+        echo $ALL_ISSUE_KEYS
 
         DISTINCT_ISSUE_KEYS=""
         if [ -n "$ALL_ISSUE_KEYS" ]; then
-          # Remove resultados de id das tarefas diplicadas
+          # Remove resultadoss de id das tarefas diplicadas
           DISTINCT_ISSUE_KEYS=$(echo "$ALL_ISSUE_KEYS" | sort | uniq)
+          echo $DISTINCT_ISSUE_KEYS
+        else
+          echo "Nenhuma tarefa foi referenciada nos últimos commits."
         fi
-        echo $DISTINCT_ISSUE_KEYS
 
         #  exporta a variavel ISSUE_KEYS, id das tarefas encontradas, como output 
         if [ -n "$DISTINCT_ISSUE_KEYS" ]; then
           echo "::set-output name=ISSUE_KEYS::"$DISTINCT_ISSUE_KEYS""
-        else
-          echo "Nenhuma tarefa foi referencia nos ultimos commits."
         fi
       shell: bash
 
