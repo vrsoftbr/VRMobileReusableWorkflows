@@ -5,11 +5,12 @@ on:
     secrets:
       VR_PACKAGE_TOKEN:
         required: true
+      JIRA_API_TOKEN:
+        required: true
+    variables:
       JIRA_BASE_URL:
         required: true
       JIRA_USER_EMAIL:
-        required: true
-      JIRA_API_TOKEN:
         required: true
     inputs:
       JIRA_ISSUE_PREFIX:
@@ -79,8 +80,8 @@ jobs:
       if: steps.find_issue_key.outputs.ISSUE_KEYS
       run: |
         # caputura os inputs
-        JIRA_USERNAME=${{ secrets.JIRA_USER_EMAIL }}
-        JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
+        JIRA_USERNAME=${{ vars.JIRA_USER_EMAIL }}
+        JIRA_API_TOKEN=${{ vars.JIRA_API_TOKEN }}
         JIRA_BASE_URL=${{ secrets.JIRA_BASE_URL }}
 
         # caputura os inputs
