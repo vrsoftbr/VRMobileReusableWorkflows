@@ -38,7 +38,7 @@ jobs:
         run: |
           BRANCH=${{ inputs.BRANCH }}
 
-          git checkout $
+          git checkout $BRANCH
           
           if git merge --ff-only origin/main; then
             # O merge foi bem-sucedido, então podemos fazer o push
