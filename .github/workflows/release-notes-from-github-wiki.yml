@@ -89,7 +89,7 @@ jobs:
             echo "$BUG_FIX_INFO"  >> "$releaseNoteFile"
           fi
 
-          if [ -n "$BUG_FIX_INFO" ]; then
+          if [ -n "$FEAT_INFO" ]; then
             echo "### Novos Recursos:" >> "$releaseNoteFile"
 
             FEAT_INFO=$(echo "$FEAT_INFO" | sed 's/|/\n/g')
