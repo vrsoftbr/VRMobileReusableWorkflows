@@ -1,0 +1,44 @@
+name: Espelhar branch main.
+
+on:
+  workflow_call:
+    secrets:
+      VR_PACKAGE_TOKEN:
+        required: true
+    inputs:
+      BRANCH:
+        required: true
+        type: string
+
+jobs:
+  keep-it-up-to-date:
+    name: Espelhar branch main.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.VR_PACKAGE_TOKEN }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Verificar se a branch existe
+        id: check-branch
+        run: |
+          BRANCH=${{ inputs.BRANCH }}
+
+          if ! git rev-parse --verify $BRANCH; then
+            # Se a branch não existir será criada
+            git checkout -b $BRANCH origin/main
+          fi
+
+      - name: Atualizar a branch com a main
+        id: merge-branch
+        run: |
+          BRANCH=${{ inputs.BRANCH }}
+
+          git checkout $BRANCH
+          git merge --ff-only origin/main 
+          git push origin $BRANCH || true
+
