@@ -125,25 +125,25 @@ jobs:
           # Verifique se a saída do jq não está vazia
           if [ -n "$ISSUE_BREAKING_CHANGE_INFO" ]; then
             # Formata quebras de linha
-            ISSUE_BREAKING_CHANGE_INFO=$(echo "$ISSUE_BREAKING_CHANGE_INFO" | tr '\n' '|')
+            ISSUE_BREAKING_CHANGE_INFO=$(echo "$ISSUE_BREAKING_CHANGE_INFO" | tr '\n' '|' | tr -d '"' | tr -d "'" | tr -d '`')
             BREAKING_CHANGE_INFO="${BREAKING_CHANGE_INFO} $ISSUE_BREAKING_CHANGE_INFO"
           fi
 
           if [ -n "$ISSUE_BUG_FIX_INFO" ]; then
             # Formata quebras de linha
-            ISSUE_BUG_FIX_INFO=$(echo "$ISSUE_BUG_FIX_INFO" | tr '\n' '|')
+            ISSUE_BUG_FIX_INFO=$(echo "$ISSUE_BUG_FIX_INFO" | tr '\n' '|' | tr -d '"' | tr -d "'" | tr -d '`')
             BUG_FIX_INFO="${BUG_FIX_INFO} $ISSUE_BUG_FIX_INFO"
           fi
 
           if [ -n "$ISSUE_FEAT_INFO" ]; then
             # Formata quebras de linha
-            ISSUE_FEAT_INFO=$(echo "$ISSUE_FEAT_INFO" | tr '\n' '|')
+            ISSUE_FEAT_INFO=$(echo "$ISSUE_FEAT_INFO" | tr '\n' '|' | tr -d '"' | tr -d "'" | tr -d '`')
             FEAT_INFO="${FEAT_INFO} $ISSUE_FEAT_INFO"
           fi
 
           if [ -n "$ISSUE_TEC_NOTE_INFO" ]; then
             # Formata quebras de linha
-            ISSUE_TEC_NOTE_INFO=$(echo "$ISSUE_TEC_NOTE_INFO" | tr '\n' '|')
+            ISSUE_TEC_NOTE_INFO=$(echo "$ISSUE_TEC_NOTE_INFO" | tr '\n' '|' | tr -d '"' | tr -d "'" | tr -d '`')
             TEC_NOTE_INFO="${TEC_NOTE_INFO} $ISSUE_TEC_NOTE_INFO"
           fi
 
