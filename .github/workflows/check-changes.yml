@@ -100,13 +100,13 @@ jobs:
           # Obtenha a quantidade de novos commits
           if [ -n "$IS_FIRST_VERSION" ]; then
             # Se IS_FIRST_VERSION retornar vazio considera os commits da branch main
-            COMMIT_MESSAGES=$(git log $(git rev-list main --abbrev=0 @^)..@ --pretty=format:%B | tr '\n' '|')
+            COMMIT_MESSAGES=$(git log $(git rev-list main --abbrev=0 @^)..@ --pretty=format:%B | tr '\n' '|' | tr -d '"' | tr -d "'" | tr -d '`')
           else
             # Se não considera os commits da feitos depois da ultima TAG
-            COMMIT_MESSAGES=$(git log $(git describe --tags --abbrev=0 @^)..@ --pretty=format:%B | tr '\n' '|')
+            COMMIT_MESSAGES=$(git log $(git describe --tags --abbrev=0 @^)..@ --pretty=format:%B | tr '\n' '|' | tr -d '"' | tr -d "'" | tr -d '`')
           fi
 
-          # COMMIT_MESSAGES=$(git log $(git describe --tags --abbrev=0 @^)..@ --pretty=format:%B | tr '\n' '|')
+          # COMMIT_MESSAGES=$(git log $(git describe --tags --abbrev=0 @^)..@ --pretty=format:%B | tr '\n' '|' | tr -d '"' | tr -d "'" | tr -d '`')
 
           # Set output COMMIT_MESSAGES
           echo "::set-output name=COMMIT_MESSAGES::$COMMIT_MESSAGES"
